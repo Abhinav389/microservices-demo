@@ -1,0 +1,156 @@
+services:
+
+# Database
+  redis-cart:
+    image: redis:alpine
+    container_name: redis-cart
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  
+
+# Core Backend Services
+
+  adservice:
+    build: ./src/adservice
+    container_name: adservice
+    restart: unless-stopped
+    environment:
+      PORT: "9555"
+      DISABLE_STATS: "1"
+      DISABLE_TRACING: "1"
+    
+  currencyservice:
+    build: ./src/currencyservice
+    container_name: currencyservice
+    restart: unless-stopped
+    environment:
+      PORT: "7000"
+      DISABLE_PROFILER: "1"
+
+  productcatalogservice:
+    build: ./src/productcatalogservice
+    container_name: productcatalogservice
+    restart: unless-stopped
+    environment:
+      PORT: "3550"
+      DISABLE_PROFILER: "1"
+  
+  shippingservice:
+    build: ./src/shippingservice
+    container_name: shippingservice
+    restart: unless-stopped
+    environment:
+      PORT: "50051"
+      DISABLE_PROFILER: "1"
+
+
+  paymentservice:
+    build: ./src/paymentservice
+    container_name: paymentservice
+    restart: unless-stopped
+    environment:
+      PORT: "50051"
+      DISABLE_PROFILER: "1"
+  emailservice:
+    build: ./src/emailservice
+    container_name: emailservice
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      DISABLE_PROFILER: "1"
+
+  cartservice:
+    build: ./src/cartservice/src
+    container_name: cartservice
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis-cart:6379"
+      ASPNETCORE_HTTP_PORTS: "7070"
+      DOTNET_EnableDiagnostics: "0"
+    depends_on:
+      - redis-cart
+  recommendationservice:
+    build: ./src/recommendationservice
+    container_name: recommendationservice
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
+      DISABLE_PROFILER: "1"
+    depends_on:
+      - productcatalogservice
+  checkoutservice:
+    build: ./src/checkoutservice
+    container_name: checkoutservice
+    restart: unless-stopped
+    environment:
+      PORT: "5050"
+      PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
+      SHIPPING_SERVICE_ADDR: "shippingservice:50051"
+      PAYMENT_SERVICE_ADDR: "paymentservice:50051"
+      EMAIL_SERVICE_ADDR: "emailservice:8080"
+      CURRENCY_SERVICE_ADDR: "currencyservice:7000"
+      CART_SERVICE_ADDR: "cartservice:7070"
+      DISABLE_PROFILER: "1"
+    depends_on:
+      - productcatalogservice
+      - shippingservice
+      - paymentservice
+      - emailservice
+      - currencyservice
+      - cartservice
+  shoppingassistantservice:
+    build: ./src/shoppingassistantservice
+    container_name: shoppingassistantservice
+    restart: unless-stopped
+    profiles: ["ai"]
+    environment:
+      PORT: "8080"
+      
+  # Web Frontend (Exposed to Host)
+  frontend:
+    build: ./src/frontend
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
+      CURRENCY_SERVICE_ADDR: "currencyservice:7000"
+      CART_SERVICE_ADDR: "cartservice:7070"
+      RECOMMENDATION_SERVICE_ADDR: "recommendationservice:8080"
+      SHIPPING_SERVICE_ADDR: "shippingservice:50051"
+      CHECKOUT_SERVICE_ADDR: "checkoutservice:5050"
+      AD_SERVICE_ADDR: "adservice:9555"
+      SHOPPING_ASSISTANT_SERVICE_ADDR: "shoppingassistantservice:8080"
+      ENABLE_PROFILER: "0"
+    depends_on:
+      - productcatalogservice
+      - currencyservice
+      - cartservice
+      - recommendationservice
+      - shippingservice
+      - checkoutservice
+      - adservice
+
+  # Traffic / Load Generator
+  loadgenerator:
+    build: ./src/loadgenerator
+    container_name: loadgenerator
+    restart: unless-stopped
+    environment:
+      FRONTEND_ADDR: "frontend:8080"
+      USERS: "10"
+      RATE: "1"
+    depends_on:
+      - frontend
+
+#data
+volumes:
+  redis-data:
+

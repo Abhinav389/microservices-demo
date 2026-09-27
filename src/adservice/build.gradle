@@ -41,9 +41,8 @@ dependencies {
                 "io.grpc:grpc-services:${grpcVersion}",
                 "io.grpc:grpc-census:${grpcVersion}",
                 "org.apache.logging.log4j:log4j-core:2.26.1",
-                "com.google.protobuf:protobuf-java:${protocVersion}"
-
-        runtimeOnly "com.fasterxml.jackson.core:jackson-core:${jacksonCoreVersion}",
+                "com.google.protobuf:protobuf-java:${protocVersion}",
+                "com.fasterxml.jackson.core:jackson-core:${jacksonCoreVersion}",
                 "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
                 "io.netty:netty-tcnative-boringssl-static:2.0.84.Final"
     }
