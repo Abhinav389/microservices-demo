@@ -2,7 +2,7 @@ ARG BUILDPLATFORM=linux/arm64
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
 
 ARG TARGETOS=linux
-ARG TARGETARCH=arm64 
+ARG TARGETARCH=amd64 
 
 WORKDIR /src
 
